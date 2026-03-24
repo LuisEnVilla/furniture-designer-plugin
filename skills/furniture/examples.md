@@ -1,0 +1,107 @@
+# Usage Examples
+
+## Example 1: Full Design Workflow
+
+**User says:** "Design a kitchen base cabinet, 60cm wide, 90cm tall, 60cm deep"
+
+**Agent workflow:**
+
+1. Call `design_furniture("kitchen_base", 60, 90, 60)`
+2. Call `validate_structure(spec)` → expect 0 errors, 0 warnings
+3. Call `generate_bom(spec)` → panels, hardware, edge banding
+4. Call `optimize_cuts(parts)` → sheets and waste
+5. Call `get_assembly_steps(spec)` → step-by-step instructions
+
+**Expected summary:**
+
+> Kitchen base cabinet 60x90x60cm in melamine 16mm:
+> - 9 panels: 2 sides, 1 bottom, 2 rails, 1 back, 1 shelf, 1 kickplate, 1 door
+> - Validation: 0 errors, 0 warnings
+> - BOM: 8 structural panels + 1 back panel, 4.55m edge banding
+> - Cuts: 2 sheets (2440x1220mm), ~62% waste (normal for a single small cabinet)
+> - Assembly: 9 steps
+
+---
+
+## Example 2: Consult Material Standards
+
+**User says:** "What material should I use for a 100cm wide shelf?"
+
+**Agent workflow:**
+
+1. Call `get_material_specs("melamine_16")` → max span 75cm (too narrow!)
+2. Call `get_material_specs("mdf_18")` → max span 90cm (still too narrow!)
+3. Call `get_material_specs("plywood_18")` → max span 100cm (exact fit)
+
+**Agent recommends:** plywood_18 or solid_pine_20 for a 100cm span, or add a vertical divider with melamine_16.
+
+---
+
+## Example 3: Build 3D Model in FreeCAD
+
+**User says:** "Build a bookshelf 80x200x30 in FreeCAD"
+
+**Agent workflow:**
+
+1. Call `design_furniture("bookshelf", 80, 200, 30)`
+2. Call `build_3d_model(spec)` → gets Python script
+3. Call `mcp__freecad__execute_code(script)` → builds model in FreeCAD
+4. Call `mcp__freecad__get_view("Isometric")` → shows screenshot
+
+**Note:** FreeCAD must be open with RPC server running.
+
+---
+
+## Example 4: Exploded View for Assembly Reference
+
+**User says:** "Show me how the cabinet assembles"
+
+**Agent workflow:**
+
+1. Reuse existing spec (or generate new one)
+2. Call `build_exploded_view(spec, gap_mm=80)`
+3. Execute in FreeCAD and show view
+
+---
+
+## Example 5: Cut Optimization
+
+**User says:** "How many sheets do I need for a closet 120x240x60?"
+
+**Agent workflow:**
+
+1. Call `design_furniture("closet", 120, 240, 60)` → generates spec with vertical divider (120cm > 75cm max span)
+2. Call `optimize_cuts(parts)` → number of sheets and waste
+3. Present the cut layout with waste percentage
+
+---
+
+## Example 6: Wide Cabinet with Auto-Divider
+
+**User says:** "Design a 150cm wide bookshelf"
+
+**Agent notes:** 150cm exceeds the max unsupported span for melamine_16 (75cm), so the engine automatically adds a vertical divider at the center.
+
+1. Call `design_furniture("bookshelf", 150, 200, 30, "melamine_16")`
+2. Spec will include a `divider_center` panel
+3. Validation will note the divider was added
+
+---
+
+## Common Options
+
+```json
+{
+  "num_shelves": 4,
+  "has_doors": true,
+  "door_type": "double",
+  "kickplate_height": 10,
+  "has_modesty_panel": true
+}
+```
+
+- `num_shelves`: Number of adjustable shelves
+- `has_doors`: Add doors (for bookshelf, closet, wall cabinet)
+- `door_type`: "single" or "double" (auto-selected based on width if omitted)
+- `kickplate_height`: Kickplate height in cm (default: 10)
+- `has_modesty_panel`: Front modesty panel for desks (default: true)

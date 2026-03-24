@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "furniture-designer": {
+      "command": "uvx",
+      "args": ["furniture-designer-mcp"]
+    }
+  }
+}

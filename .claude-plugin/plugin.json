@@ -1,0 +1,10 @@
+{
+  "name": "furniture-designer",
+  "description": "Professional furniture design with structural validation, cut optimization, BOM generation, and FreeCAD 3D visualization.",
+  "version": "1.0.0",
+  "author": {
+    "name": "LuisEnVilla"
+  },
+  "repository": "https://github.com/LuisEnVilla/furniture-designer-plugin",
+  "license": "MIT"
+}
