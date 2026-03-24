@@ -48,6 +48,9 @@ Resumen: 14 paneles en melamine 16mm, 3 tableros 2440x1220,
 - El modelo 3D en **FreeCAD** usa `App::Part` por panel, grupos por rol (`Estructura`, `Puertas`, `Repisas`, `Respaldo`), y propiedades custom (`Material`, `Thickness_mm`, `RealDimensions`, `EdgeBanding`)
 - Los **labels en FreeCAD** incluyen dimensiones (ej: "Lateral — side_left (590×2215×18mm)") para identificación visual rápida
 - Las tools **validan el formato del spec** antes de procesar, retornando errores descriptivos con sugerencias de corrección
+- **Cajones completos**: `design_furniture` genera caja completa (frente + laterales + trasera + fondo) con correderas telescópicas usando `options.num_drawers`
+- Las tools de fabricación y diseño usan **respuestas compactas** por defecto (resumen + JSON), reduciendo consumo de contexto
+- El cut optimizer **relaja automáticamente** la restricción de grano cuando una pieza no cabe, con aviso
 
 ## Instalación
 
@@ -130,7 +133,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 │  furniture-designer  │     │  furniture-designer-mcp      │
 │  -plugin (este repo) │────→│  (servidor MCP, repo aparte) │
 │                      │     │                               │
-│  • Skill SKILL.md    │     │  • 16 tools MCP               │
+│  • Skill SKILL.md    │     │  • 17 tools MCP               │
 │  • .mcp.json         │     │  • Engine: designer, validator │
 │  • reference.md      │     │  • Knowledge: materials, rules │
 │  • examples.md       │     │  • FreeCAD bridge scripts      │
@@ -145,7 +148,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 ```
 
 - **Este plugin** — capa de UX: enseña al agente de IA cómo orquestar las herramientas
-- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 16 tools MCP que funcionan con cualquier cliente MCP
+- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 17 tools MCP que funcionan con cualquier cliente MCP
 - **freecad-mcp** (opcional) — puente para ejecutar scripts Python en FreeCAD
 
 ## Licencia

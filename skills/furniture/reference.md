@@ -16,9 +16,10 @@ Generate a complete furniture spec with standards applied.
 - `height` (float, required): Total height in cm
 - `depth` (float, required): Total depth in cm
 - `material` (string, default: `melamine_16`): Material key
-- `options` (dict, optional): Overrides like `{"num_shelves": 3, "has_doors": true, "door_type": "double", "kickplate_height": 10}`
+- `options` (dict, optional): Overrides like `{"num_shelves": 3, "has_doors": true, "door_type": "double", "kickplate_height": 10, "num_drawers": 2, "drawer_height": 140}`
+- `compact` (bool, default: `true`): Return compact summary + JSON. Set `false` for pretty-printed JSON only.
 
-**Returns:** Complete furniture spec (JSON) with parts list, positions (mm), hardware, and structural notes.
+**Returns:** Compact summary + furniture spec JSON (or full JSON if compact=false).
 
 **Notes:**
 - Input dimensions are in cm, output dimensions in mm (manufacturing standard)
@@ -110,8 +111,9 @@ Generate a Bill of Materials.
 
 **Parameters:**
 - `spec` (dict, required): A furniture spec
+- `compact` (bool, default: `true`): Return compact summary + JSON.
 
-**Returns:** Grouped panels (with quantities), back panels, hardware list, edge banding details and totals in meters, summary.
+**Returns:** Compact summary + BOM JSON.
 
 ### `optimize_cuts`
 
@@ -124,8 +126,9 @@ Optimize panel cuts on standard sheets using guillotine algorithm.
 - `sheet_height` (float, default: 1220): Sheet height in mm
 - `blade_kerf` (float, default: 3): Saw blade width in mm
 - `grain_direction` (string, default: `"auto"`): Global grain default. `"auto"` = per-piece, `"length"` = all pieces respect grain, `"none"` = free rotation.
+- `compact` (bool, default: `true`): Return compact summary + JSON.
 
-**Returns:** Sheets used, piece positions, waste percentage, grain arrows, text diagram.
+**Returns:** Compact summary + optimization JSON. Includes `warnings` for auto-relaxed grain constraints.
 
 **Notes:**
 - Blade kerf (3mm default) is deducted from every cut — both between shelves and between pieces within a shelf.
@@ -138,8 +141,9 @@ Generate step-by-step assembly instructions.
 
 **Parameters:**
 - `spec` (dict, required): A furniture spec
+- `compact` (bool, default: `true`): Return compact summary + JSON.
 
-**Returns:** Ordered assembly steps with part references, hardware per step, and tips (in Spanish).
+**Returns:** Compact summary + assembly steps JSON. Drawer boxes have detailed 3-step assembly (slides → box → front).
 
 ---
 
@@ -163,6 +167,8 @@ Build the furniture as a 3D model directly in FreeCAD.
 - Shelves: green tint (0.70, 0.85, 0.65)
 - Back: gray (0.75, 0.75, 0.75)
 - Doors: blue tint (0.60, 0.75, 0.90)
+- Drawer front: blue tint (0.60, 0.75, 0.90)
+- Drawer sides/back/bottom: lighter blues
 - Rails: dark brown (0.65, 0.55, 0.42)
 - Kickplate: dark gray (0.50, 0.50, 0.50)
 - Dividers: orange (0.90, 0.72, 0.40)
@@ -258,6 +264,20 @@ build_import_script("MyDoc")
 
 ---
 
+## Development Tools
+
+### `reload_engine`
+
+Reload all engine modules to pick up code changes without restarting the MCP server.
+
+**Parameters:** None.
+
+**Returns:** List of reloaded modules.
+
+**Use case:** After modifying engine files (designer.py, cut_optimizer.py, freecad_scripts.py, etc.) during development, call this instead of restarting the server.
+
+---
+
 ## Furniture Spec Schema
 
 ### Estructura raíz
@@ -303,7 +323,10 @@ Campos opcionales:
 | `rail` | Travesaño |
 | `kickplate` | Zócalo |
 | `divider` | División vertical |
-| `drawer_front` | Frente de cajón |
+| `drawer_front` | Frente de cajón (canteado en 4 lados) |
+| `drawer_side` | Lateral de cajón |
+| `drawer_back` | Trasera de cajón |
+| `drawer_bottom` | Fondo de cajón (MDF 3mm) |
 
 ### Errores comunes de formato
 
