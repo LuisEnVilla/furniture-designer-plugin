@@ -33,6 +33,7 @@ Resumen: 14 paneles en melamine 16mm, 3 tableros 2440x1220,
 - **Instrucciones de ensamble** paso a paso con tipo de fijación y cantidades
 - **Especificaciones de ensamble** detalladas: qué tornillo, a qué profundidad taladrar, cuándo usar pegamento
 - **Modelo 3D** en FreeCAD con componentes organizados por rol y propiedades de material (opcional)
+- **Importación desde FreeCAD** — leer un modelo existente (editado o manual) y validarlo, generar BOM y cortes
 
 ### Consideraciones importantes
 
@@ -126,7 +127,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 │  furniture-designer  │     │  furniture-designer-mcp      │
 │  -plugin (este repo) │────→│  (servidor MCP, repo aparte) │
 │                      │     │                               │
-│  • Skill SKILL.md    │     │  • 13 tools MCP               │
+│  • Skill SKILL.md    │     │  • 15 tools MCP               │
 │  • .mcp.json         │     │  • Engine: designer, validator │
 │  • reference.md      │     │  • Knowledge: materials, rules │
 │  • examples.md       │     │  • FreeCAD bridge scripts      │

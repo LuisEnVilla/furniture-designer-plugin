@@ -187,3 +187,45 @@ Generate a FreeCAD script to visualize cut optimization layout.
 - `doc_name` (string, default: "CutLayout"): FreeCAD document name
 
 **Returns:** Python code. Top-down view of sheets with placed panels.
+
+---
+
+## FreeCAD Import Tools
+
+These tools read existing FreeCAD models back into the furniture spec format.
+
+### `build_import_script`
+
+Generate a FreeCAD script that extracts all panels from an existing document.
+
+**Parameters:**
+- `doc_name` (string, default: "Furniture"): FreeCAD document name to read
+
+**Returns:** Python code. Execute with `mcp__freecad__execute_code`. The stdout contains JSON prefixed with `FURNITURE_SPEC_JSON:`.
+
+**Reads from each panel:**
+- App::Part with custom properties → Role, Material, Thickness_mm, RealDimensions, EdgeBanding, Placement
+- Standalone Part::Box → Length, Width, Height, Placement (roles inferred from name/geometry)
+
+### `parse_freecad_import`
+
+Parse the import script output into a furniture spec.
+
+**Parameters:**
+- `raw_output` (string, required): The stdout from executing the import script
+
+**Returns:** A furniture spec (JSON) compatible with `validate_structure`, `generate_bom`, `optimize_cuts`, etc.
+
+**Behavior:**
+- Panels with custom properties (from our system) → exact reconstruction
+- Part::Box with names like "side_left", "shelf_1" → role inferred from name
+- Part::Box with generic names → role inferred from geometry (thinnest axis)
+- Unrecognizable panels → `role: "unknown"` with warnings in `import_warnings`
+
+**Workflow:**
+```
+build_import_script("MyDoc")
+    → execute_code(script) → raw output
+        → parse_freecad_import(raw) → spec
+            → validate_structure(spec) / generate_bom(spec) / ...
+```

@@ -114,6 +114,44 @@
 
 ---
 
+## Example 9: Import and Validate from FreeCAD
+
+**User says:** "Modifiqué el mueble en FreeCAD, agregué una repisa. ¿Puedes validarlo?"
+
+**Agent workflow:**
+
+1. Call `build_import_script("Furniture")` → extraction script
+2. Call `mcp__freecad__execute_code(script)` → raw output with JSON
+3. Call `parse_freecad_import(raw_output)` → spec with all panels
+4. Check `import_warnings` — inform user if any panel has unknown role
+5. Call `validate_structure(spec)` → check structural integrity
+6. Call `generate_bom(spec)` → updated bill of materials
+7. Call `optimize_cuts(parts)` → new cut layout with the added shelf
+
+**Expected summary:**
+
+> Imported 8 panels from FreeCAD (document "Furniture").
+> Validation: 0 errors, 1 warning (shelf >80cm, consider reinforcement).
+> BOM updated: 9 panels, 5.2m edge banding.
+> Cuts: 2 sheets, 54% waste.
+
+---
+
+## Example 10: Import Manual Model
+
+**User says:** "Hice un mueble desde cero en FreeCAD. ¿Puedes generar el BOM y los cortes?"
+
+**Agent workflow:**
+
+1. Call `build_import_script("MiMueble")` → extraction script
+2. Execute and parse → spec
+3. If `import_warnings` has unknown roles: "Encontré 2 paneles sin rol definido (Box003, Box005). ¿Son repisas, laterales, o algo más?"
+4. After user clarifies → adjust spec and continue with `generate_bom` + `optimize_cuts`
+
+**Note:** For best results with manual models, name objects descriptively in FreeCAD (e.g., "side_left", "shelf_1", "back") or add the `Role` property via FreeCAD's property editor.
+
+---
+
 ## Common Options
 
 ```json

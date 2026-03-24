@@ -6,7 +6,8 @@ description: >
   get assembly instructions, consult assembly specifications, or build 3D models in FreeCAD.
   Triggers on keywords like "design", "furniture", "cabinet", "shelf", "desk", "closet",
   "cut optimization", "BOM", "assembly", "FreeCAD", "3D model", "exploded view",
-  "screws", "tornillos", "glue", "pegamento", "drilling", "taladro", "hinges", "bisagras".
+  "screws", "tornillos", "glue", "pegamento", "drilling", "taladro", "hinges", "bisagras",
+  "import", "validate model", "validate existing", "read from FreeCAD", "validar modelo".
 argument-hint: "[action] [furniture_type] [width]x[height]x[depth] [material]"
 user-invocable: true
 ---
@@ -39,6 +40,10 @@ See [reference.md](reference.md) for the complete tool reference with parameters
 - `build_3d_model` — Generate FreeCAD Python script for assembled 3D model
 - `build_exploded_view` — Generate FreeCAD script for exploded assembly view
 - `build_cut_diagram` — Generate FreeCAD script to visualize cut layout on sheets
+
+### FreeCAD Import Tools (requires freecad-mcp)
+- `build_import_script` — Generate script to extract panels from an existing FreeCAD document
+- `parse_freecad_import` — Parse the script output into a usable furniture spec
 
 ## Performance Guidelines
 
@@ -122,6 +127,21 @@ When the user wants to see how to cut the panels from sheets:
 3. Call `build_cut_diagram` with the optimization result
 4. Execute via `mcp__freecad__execute_code`
 5. Show using `mcp__freecad__get_view` with view "Top"
+
+### Action: Import / Validate from FreeCAD
+
+When the user has an existing model in FreeCAD and wants to validate, generate BOM, optimize cuts, etc.:
+
+1. Call `build_import_script(doc_name)` to get the extraction script
+2. Execute via `mcp__freecad__execute_code` → raw output with JSON
+3. Call `parse_freecad_import(raw_output)` → furniture spec
+4. Check `import_warnings` — if panels have unknown roles, inform the user
+5. Use the spec with `validate_structure`, `generate_bom`, `optimize_cuts`, `get_assembly_steps`, etc.
+
+**Notes:**
+- Models created by this system have custom properties (Role, Material, etc.) and import cleanly.
+- Manually created Part::Box objects will have roles inferred from names and geometry. The agent should inform the user if any panel has `role: "unknown"` and suggest naming conventions or setting the Role property in FreeCAD.
+- The imported spec has `furniture_type: "imported"` — some standards checks may not apply.
 
 ### Action: Consult Standards
 
