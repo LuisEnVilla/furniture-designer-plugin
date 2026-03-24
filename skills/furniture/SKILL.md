@@ -36,10 +36,11 @@ See [reference.md](reference.md) for the complete tool reference with parameters
 - `optimize_cuts` — 2D bin packing for panel cutting on standard sheets
 - `get_assembly_steps` — Step-by-step assembly instructions in Spanish
 
-### FreeCAD 3D Visualization Tools (requires freecad-mcp)
-- `build_3d_model` — Generate FreeCAD Python script for assembled 3D model
-- `build_exploded_view` — Generate FreeCAD script for exploded assembly view
-- `build_cut_diagram` — Generate FreeCAD script to visualize cut layout on sheets
+### FreeCAD 3D Visualization Tools (requires FreeCAD with RPC server)
+- `build_3d_model` — Build assembled 3D model directly in FreeCAD
+- `build_exploded_view` — Build exploded assembly view directly in FreeCAD
+- `build_cut_diagram` — Build cut layout diagram directly in FreeCAD
+- `build_techdraw` — Build plano técnico TechDraw (vistas ortogonales A3) directly in FreeCAD
 
 ### FreeCAD Import Tools (requires freecad-mcp)
 - `build_import_script` — Generate script to extract panels from an existing FreeCAD document
@@ -58,7 +59,7 @@ get_standards("kitchen_base")                  # only if user asks for "full det
 
 ### FreeCAD: Minimize Screenshot Requests
 
-When using FreeCAD tools, **only call `mcp__freecad__get_view` when the user explicitly asks to see the result** ("show me", "let me see", "screenshot", "how does it look"). The `execute_code` response already confirms success.
+When using FreeCAD tools, **only call `mcp__freecad__get_view` when the user explicitly asks to see the result** ("show me", "let me see", "screenshot", "how does it look"). The tool response already confirms success — no need for additional `execute_code` calls.
 
 If the user has configured `freecad-mcp` with `--only-text-feedback`, responses will be text-only (no base64 images), which dramatically reduces token consumption.
 
@@ -103,20 +104,20 @@ Present a clear summary:
 When the user wants to see the design in FreeCAD:
 
 1. Generate (or reuse) a furniture spec
-2. Call `build_3d_model` to get the FreeCAD Python script
-3. Execute the script using `mcp__freecad__execute_code`
-4. Show the result using `mcp__freecad__get_view` with view "Isometric"
+2. Call `build_3d_model` — executes directly in FreeCAD via XML-RPC
+3. Only if user asks to see: call `mcp__freecad__get_view` with view "Isometric"
 
-**Note**: This requires the `freecad` MCP server to be configured and FreeCAD running with the RPC server on port 9875.
+**Note**: Requires FreeCAD running with the RPC server on port 9875.
+
+**Optional:** After completing the 3D model, suggest: "¿Necesitas un plano técnico 2D? Puedo generar vistas ortogonales con `build_techdraw`."
 
 ### Action: Exploded View
 
 When the user wants to see how the furniture assembles:
 
 1. Generate (or reuse) a furniture spec
-2. Call `build_exploded_view` with gap_mm=80 for clear separation
-3. Execute via `mcp__freecad__execute_code`
-4. Show using `mcp__freecad__get_view` with view "Isometric"
+2. Call `build_exploded_view` with gap_mm=80 — executes directly in FreeCAD
+3. Only if user asks to see: call `mcp__freecad__get_view` with view "Isometric"
 
 ### Action: Cut Layout
 
@@ -124,9 +125,18 @@ When the user wants to see how to cut the panels from sheets:
 
 1. Generate (or reuse) a furniture spec
 2. Call `optimize_cuts` with the parts
-3. Call `build_cut_diagram` with the optimization result
-4. Execute via `mcp__freecad__execute_code`
-5. Show using `mcp__freecad__get_view` with view "Top"
+3. Call `build_cut_diagram` with the optimization result — executes directly in FreeCAD
+4. Only if user asks to see: call `mcp__freecad__get_view` with view "Top"
+
+### Action: Generate TechDraw (optional)
+
+**Trigger:** User asks for technical drawing, fabrication plans, 2D views, "plano técnico", "vistas", or similar.
+
+**Steps:**
+1. Call `build_techdraw(spec=<spec>, doc_name="PlanTecnico")` — executes directly in FreeCAD
+2. The page includes front, top, and right views auto-scaled to A3
+
+**When to suggest:** After completing a 3D model build, mention: "Si necesitas un plano técnico 2D con vistas ortogonales, puedo generarlo con TechDraw."
 
 ### Action: Import / Validate from FreeCAD
 
@@ -142,6 +152,28 @@ When the user has an existing model in FreeCAD and wants to validate, generate B
 - Models created by this system have custom properties (Role, Material, etc.) and import cleanly.
 - Manually created Part::Box objects will have roles inferred from names and geometry. The agent should inform the user if any panel has `role: "unknown"` and suggest naming conventions or setting the Role property in FreeCAD.
 - The imported spec has `furniture_type: "imported"` — some standards checks may not apply.
+
+### Action: Fix Invalid Spec
+
+**Trigger:** A tool returns spec validation errors.
+
+**Steps:**
+
+1. Read the error messages — each tells exactly what field is wrong and what the correct name is
+2. Common fixes:
+   - `'panels' → 'parts'`: el campo de nivel raíz se llama `parts`, no `panels`
+   - `'name' → 'id'`: cada panel se identifica con `id`, no `name`
+   - `'width' → 'width_mm'`: en el spec las dimensiones llevan sufijo `_mm`
+   - `'height' → 'height_mm'`: igual
+   - `'thickness' → 'thickness_mm'`: igual
+   - `'position' → 'position_mm'`: la posición también lleva `_mm`
+   - Role inválido: verificar contra la lista de roles válidos en reference.md
+3. After fixing, re-run the tool with the corrected spec
+4. If building a spec manually (not from `design_furniture`), validate first with any tool that accepts spec — all of them run validation before processing
+
+**Important:** Never silently ignore validation errors. Always fix the spec before proceeding.
+
+> **Nota:** `optimize_cuts` usa un schema diferente para `parts`: campos `width` y `height` (sin `_mm`), `qty`, `grain`. No mezclar con el schema del furniture spec. Ver reference.md para detalles.
 
 ### Action: Consult Standards
 

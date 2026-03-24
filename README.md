@@ -34,6 +34,7 @@ Resumen: 14 paneles en melamine 16mm, 3 tableros 2440x1220,
 - **Especificaciones de ensamble** detalladas: qué tornillo, a qué profundidad taladrar, cuándo usar pegamento
 - **Modelo 3D** en FreeCAD con componentes organizados por rol y propiedades de material (opcional)
 - **Importación desde FreeCAD** — leer un modelo existente (editado o manual) y validarlo, generar BOM y cortes
+- **Plano técnico 2D** en FreeCAD con vistas ortogonales (frontal, superior, lateral) auto-escaladas a A3 (opcional)
 
 ### Consideraciones importantes
 
@@ -45,6 +46,8 @@ Resumen: 14 paneles en melamine 16mm, 3 tableros 2440x1220,
 - **Muebles altos** (>180cm): el validador advierte sobre anclaje a pared
 - Las knowledge tools usan **modo `brief`** por defecto para ahorrar contexto (34-84% menos tokens)
 - El modelo 3D en **FreeCAD** usa `App::Part` por panel, grupos por rol (`Estructura`, `Puertas`, `Repisas`, `Respaldo`), y propiedades custom (`Material`, `Thickness_mm`, `RealDimensions`, `EdgeBanding`)
+- Los **labels en FreeCAD** incluyen dimensiones (ej: "Lateral — side_left (590×2215×18mm)") para identificación visual rápida
+- Las tools **validan el formato del spec** antes de procesar, retornando errores descriptivos con sugerencias de corrección
 
 ## Instalación
 
@@ -127,7 +130,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 │  furniture-designer  │     │  furniture-designer-mcp      │
 │  -plugin (este repo) │────→│  (servidor MCP, repo aparte) │
 │                      │     │                               │
-│  • Skill SKILL.md    │     │  • 15 tools MCP               │
+│  • Skill SKILL.md    │     │  • 16 tools MCP               │
 │  • .mcp.json         │     │  • Engine: designer, validator │
 │  • reference.md      │     │  • Knowledge: materials, rules │
 │  • examples.md       │     │  • FreeCAD bridge scripts      │
@@ -142,7 +145,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 ```
 
 - **Este plugin** — capa de UX: enseña al agente de IA cómo orquestar las herramientas
-- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 13 tools MCP que funcionan con cualquier cliente MCP
+- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 16 tools MCP que funcionan con cualquier cliente MCP
 - **freecad-mcp** (opcional) — puente para ejecutar scripts Python en FreeCAD
 
 ## Licencia

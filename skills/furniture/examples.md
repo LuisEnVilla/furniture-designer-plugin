@@ -44,9 +44,8 @@
 **Agent workflow:**
 
 1. Call `design_furniture("bookshelf", 80, 200, 30)`
-2. Call `build_3d_model(spec)` → gets Python script
-3. Call `mcp__freecad__execute_code(script)` → builds model in FreeCAD
-4. Call `mcp__freecad__get_view("Isometric")` → shows screenshot
+2. Call `build_3d_model(spec)` → builds model directly in FreeCAD
+3. If user asks to see: call `mcp__freecad__get_view("Isometric")` → shows screenshot
 
 **Note:** FreeCAD must be open with RPC server running.
 

@@ -145,17 +145,17 @@ Generate step-by-step assembly instructions.
 
 ## FreeCAD Bridge Tools
 
-These tools generate Python scripts to execute in FreeCAD via the `freecad` MCP server.
+These tools execute directly in FreeCAD via XML-RPC (port 9875). They return a short summary — no scripts pass through the agent's context window.
 
 ### `build_3d_model`
 
-Generate a FreeCAD script that builds the furniture as a 3D model.
+Build the furniture as a 3D model directly in FreeCAD.
 
 **Parameters:**
 - `spec` (dict, required): A furniture spec
 - `doc_name` (string, default: "Furniture"): FreeCAD document name
 
-**Returns:** Python code. Execute with `mcp__freecad__execute_code`.
+**Returns:** Summary of panels built.
 
 **Panel colors by role:**
 - Sides: warm wood (0.90, 0.75, 0.55)
@@ -169,24 +169,50 @@ Generate a FreeCAD script that builds the furniture as a 3D model.
 
 ### `build_exploded_view`
 
-Generate a FreeCAD script for an exploded assembly view.
+Build an exploded assembly view directly in FreeCAD.
 
 **Parameters:**
 - `spec` (dict, required): A furniture spec
 - `gap_mm` (float, default: 50): Gap between exploded parts in mm
 - `doc_name` (string, default: "Exploded"): FreeCAD document name
 
-**Returns:** Python code. Panels separate along their assembly axis.
+**Returns:** Summary. Panels separate along their assembly axis.
 
 ### `build_cut_diagram`
 
-Generate a FreeCAD script to visualize cut optimization layout.
+Build a cut layout diagram directly in FreeCAD.
 
 **Parameters:**
 - `cut_result` (dict, required): Result from `optimize_cuts`
 - `doc_name` (string, default: "CutLayout"): FreeCAD document name
 
-**Returns:** Python code. Top-down view of sheets with placed panels.
+**Returns:** Summary. Top-down view of sheets with placed panels.
+
+### `build_techdraw`
+
+Construye un plano técnico TechDraw directamente en FreeCAD con vistas ortogonales.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `spec` | dict | (requerido) | Furniture spec como retorna `design_furniture` |
+| `doc_name` | str | `"TechDraw"` | Nombre del documento FreeCAD |
+
+**Returns:** Resumen de lo construido.
+
+**Contenido del plano:**
+- Página A3 landscape con template estándar
+- Vista frontal (frente del mueble, plano XZ)
+- Vista superior (plano XY)
+- Vista lateral derecha (plano YZ)
+- Auto-escalado para ajustarse al papel
+- Anotaciones de dimensiones generales (ancho, alto, fondo)
+
+**Notes:**
+- El script es autocontenido — reconstruye la geometría como compound, no requiere que el modelo 3D ya exista
+- El usuario puede agregar más cotas manualmente en FreeCAD después de generar el plano
+- Ideal para documentación de fabricación y presentaciones a clientes
 
 ---
 
@@ -228,4 +254,83 @@ build_import_script("MyDoc")
     → execute_code(script) → raw output
         → parse_freecad_import(raw) → spec
             → validate_structure(spec) / generate_bom(spec) / ...
+```
+
+---
+
+## Furniture Spec Schema
+
+### Estructura raíz
+
+Campos requeridos:
+- `furniture_type` (str): tipo de mueble (closet, kitchen_base, etc.)
+- `parts` (list[dict]): lista de paneles — **NO usar `panels`**
+- `dimensions_cm` (dict): `{width, height, depth}` en centímetros
+
+Campos opcionales:
+- `material` (str): clave del material (melamine_18, etc.)
+- `material_thickness_mm` (float)
+- `dimensions_mm` (dict): `{width, height, depth}` en mm
+- `hardware` (dict o list): herrajes
+- `notes` (list[str]): notas adicionales
+
+### Estructura de cada part
+
+Campos requeridos:
+- `id` (str): identificador único — **NO usar `name`**
+- `role` (str): rol del panel
+- `width_mm` (float): ancho en mm — **NO usar `width`**
+- `height_mm` (float): alto en mm — **NO usar `height`**
+- `thickness_mm` (float): espesor en mm
+
+Campos opcionales:
+- `position_mm` (dict): `{x, y, z}` posición en mm — **NO usar `position`**
+- `material` (str): material específico del panel
+- `edge_banding` (list[str] | str): cantos
+- `adjustable` (bool): si es repisa ajustable
+
+### Roles válidos
+
+| Role | Descripción |
+|------|-------------|
+| `side` | Lateral (izquierdo o derecho) |
+| `bottom` | Piso del mueble |
+| `top_panel` | Tapa superior |
+| `floor` | Piso intermedio |
+| `shelf` | Repisa |
+| `back` | Respaldo (normalmente MDF 3mm) |
+| `door` | Puerta |
+| `rail` | Travesaño |
+| `kickplate` | Zócalo |
+| `divider` | División vertical |
+| `drawer_front` | Frente de cajón |
+
+### Errores comunes de formato
+
+| Campo incorrecto | Campo correcto | Contexto |
+|---|---|---|
+| `panels` | `parts` | Nivel raíz del spec |
+| `name` | `id` | Dentro de cada part |
+| `width` | `width_mm` | Dentro de cada part (spec) |
+| `height` | `height_mm` | Dentro de cada part (spec) |
+| `thickness` | `thickness_mm` | Dentro de cada part (spec) |
+| `position` | `position_mm` | Dentro de cada part |
+
+> **Nota:** `optimize_cuts` usa un schema diferente: `width` y `height` (sin `_mm`) en mm. No confundir con el spec.
+
+### Ejemplo mínimo válido
+
+```json
+{
+  "furniture_type": "bookshelf",
+  "dimensions_cm": {"width": 80, "height": 200, "depth": 30},
+  "material": "melamine_18",
+  "parts": [
+    {"id": "side_left", "role": "side", "width_mm": 300, "height_mm": 2000, "thickness_mm": 18, "position_mm": {"x": 0, "y": 0, "z": 0}},
+    {"id": "side_right", "role": "side", "width_mm": 300, "height_mm": 2000, "thickness_mm": 18, "position_mm": {"x": 782, "y": 0, "z": 0}},
+    {"id": "top", "role": "top_panel", "width_mm": 764, "height_mm": 300, "thickness_mm": 18, "position_mm": {"x": 18, "y": 0, "z": 1982}},
+    {"id": "bottom", "role": "bottom", "width_mm": 764, "height_mm": 300, "thickness_mm": 18, "position_mm": {"x": 18, "y": 0, "z": 0}},
+    {"id": "back", "role": "back", "width_mm": 764, "height_mm": 2000, "thickness_mm": 3, "material": "mdf_3", "position_mm": {"x": 18, "y": 297, "z": 0}}
+  ]
+}
 ```
