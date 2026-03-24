@@ -3,9 +3,10 @@ name: furniture
 description: >
   Professional furniture design assistant. Use when the user wants to design furniture,
   validate structural integrity, generate bills of materials, optimize panel cuts,
-  get assembly instructions, or build 3D models in FreeCAD. Triggers on keywords like
-  "design", "furniture", "cabinet", "shelf", "desk", "closet", "cut optimization",
-  "BOM", "assembly", "FreeCAD", "3D model", "exploded view".
+  get assembly instructions, consult assembly specifications, or build 3D models in FreeCAD.
+  Triggers on keywords like "design", "furniture", "cabinet", "shelf", "desk", "closet",
+  "cut optimization", "BOM", "assembly", "FreeCAD", "3D model", "exploded view",
+  "screws", "tornillos", "glue", "pegamento", "drilling", "taladro", "hinges", "bisagras".
 argument-hint: "[action] [furniture_type] [width]x[height]x[depth] [material]"
 user-invocable: true
 ---
@@ -26,6 +27,7 @@ See [reference.md](reference.md) for the complete tool reference with parameters
 - `get_material_specs` — Material properties and structural limits
 - `get_structural_rules` — All 10 structural validation rules
 - `get_hardware_catalog` — Hardware catalog (hinges, slides, connectors, shelf pins)
+- `get_assembly_specs` — Assembly specifications (joints, fasteners, adhesives, pre-drilling, mounting)
 
 ### Validation & Manufacturing Tools
 - `validate_structure` — Check a spec against structural rules (errors + warnings)
@@ -37,6 +39,36 @@ See [reference.md](reference.md) for the complete tool reference with parameters
 - `build_3d_model` — Generate FreeCAD Python script for assembled 3D model
 - `build_exploded_view` — Generate FreeCAD script for exploded assembly view
 - `build_cut_diagram` — Generate FreeCAD script to visualize cut layout on sheets
+
+## Performance Guidelines
+
+### Knowledge Tools: Use `brief=true`
+
+All knowledge tools (`get_standards`, `get_material_specs`, `get_structural_rules`, `get_hardware_catalog`) accept a `brief` parameter. **Always pass `brief=true`** unless the user explicitly asks for full details or raw JSON. Brief mode returns compact summaries that save 60-80% of context tokens.
+
+```
+get_standards("kitchen_base", brief=true)     # ✅ default approach
+get_standards("kitchen_base")                  # only if user asks for "full details"
+```
+
+### FreeCAD: Minimize Screenshot Requests
+
+When using FreeCAD tools, **only call `mcp__freecad__get_view` when the user explicitly asks to see the result** ("show me", "let me see", "screenshot", "how does it look"). The `execute_code` response already confirms success.
+
+If the user has configured `freecad-mcp` with `--only-text-feedback`, responses will be text-only (no base64 images), which dramatically reduces token consumption.
+
+Recommended FreeCAD configuration in the user's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "freecad": {
+      "command": "uvx",
+      "args": ["freecad-mcp", "--only-text-feedback"]
+    }
+  }
+}
+```
 
 ## How to Handle User Requests
 
@@ -95,7 +127,8 @@ When the user wants to see how to cut the panels from sheets:
 
 When the user asks about standards, materials, hardware, or rules:
 
-- Use `get_standards`, `get_material_specs`, `get_hardware_catalog`, or `get_structural_rules`
+- Use `get_standards`, `get_material_specs`, `get_hardware_catalog`, `get_structural_rules`, or `get_assembly_specs`
+- For assembly questions (screws, glue, drilling, mounting), use `get_assembly_specs` with the appropriate topic
 - Present the information clearly, highlighting what's relevant to the user's question
 
 ## Supported Furniture Types

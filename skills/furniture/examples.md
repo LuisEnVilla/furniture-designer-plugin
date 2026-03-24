@@ -88,6 +88,32 @@
 
 ---
 
+## Example 7: Assembly Specifications
+
+**User says:** "¿Qué tornillos uso para unir los laterales al piso? ¿Necesito pegamento?"
+
+**Agent workflow:**
+
+1. Call `get_assembly_specs("panel_to_panel", brief=true)` → joint methods and recommendations
+2. Look at `by_joint_type.side_to_bottom` → recommends confirmat + dowels, min 3 confirmats
+
+**Agent recommends:** Confirmat 7x50mm (pre-taladrar con broca de 5mm, 40mm profundidad) + tarugos de madera 8x35mm con cola blanca. Mínimo 3 confirmats. No poner pegamento en los confirmats, solo en los tarugos.
+
+---
+
+## Example 8: Pre-Drilling Guide
+
+**User says:** "¿A qué profundidad taladro para bisagras en melamina de 18mm?"
+
+**Agent workflow:**
+
+1. Call `get_assembly_specs("pre_drilling", brief=true)` → drilling specs per material
+2. Call `get_assembly_specs("hinge_mounting", brief=true)` → full mounting process
+
+**Agent responds:** Copa Forstner de 35mm a 13mm de profundidad. CUIDADO: el panel solo tiene 18mm. Luego fijar bisagra con tornillos 3.5x16mm.
+
+---
+
 ## Common Options
 
 ```json

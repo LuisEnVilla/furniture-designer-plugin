@@ -36,6 +36,7 @@ Get ergonomic standards for a furniture type.
 
 **Parameters:**
 - `furniture_type` (string, required): One of: `kitchen_base`, `kitchen_wall`, `closet`, `bookshelf`, `desk`, `vanity`, `general`
+- `brief` (bool, default: `false`): Return compact summary instead of full JSON. **Recommended: use `true`.**
 
 **Returns:** Min/max/default dimensions, clearances, and ergonomic notes.
 
@@ -45,12 +46,16 @@ Get technical specifications for a material.
 
 **Parameters:**
 - `material` (string, required): One of: `mdf_15`, `mdf_18`, `melamine_16`, `melamine_18`, `plywood_18`, `solid_pine_20`
+- `brief` (bool, default: `false`): Return compact summary instead of full JSON. **Recommended: use `true`.**
 
 **Returns:** Thickness, max unsupported span, sheet sizes, edge banding options.
 
 ### `get_structural_rules`
 
 Get all structural validation rules.
+
+**Parameters:**
+- `brief` (bool, default: `false`): Return compact summary instead of full JSON. **Recommended: use `true`.**
 
 **Returns:** 10 rules covering back panels, max spans, cross rails, vertical dividers, kickplates, shelf reinforcement, tall furniture anchoring, confirmat spacing, floor panel load bearing.
 
@@ -60,8 +65,31 @@ Get hardware catalog with selection rules.
 
 **Parameters:**
 - `category` (string, optional): One of: `hinges`, `slides`, `connectors`, `shelf_pins`. Omit for full catalog.
+- `brief` (bool, default: `false`): Return compact summary instead of full JSON. **Recommended: use `true`.**
 
 **Returns:** Hardware specs with placement rules and quantity formulas.
+
+### `get_assembly_specs`
+
+Get detailed assembly specifications for furniture construction.
+
+**Parameters:**
+- `topic` (string, optional): One of: `panel_to_panel`, `back_panel`, `hinge_mounting`, `drawer_slide_mounting`, `shelf_pins`, `adhesive_guide`, `pre_drilling`. Omit for all topics.
+- `brief` (bool, default: `false`): Return compact summary instead of full JSON. **Recommended: use `true`.**
+
+**Returns:** Assembly specifications with step-by-step processes, fastener types, joint methods, adhesive recommendations, and material-specific pre-drilling depths.
+
+**Topics:**
+
+| Topic | Content |
+|-------|---------|
+| `panel_to_panel` | Joint methods (confirmat, confirmat+dowel, minifix), quantity rules by panel length, recommendations per joint type |
+| `back_panel` | Nailed vs grooved installation, spacing, adhesive usage |
+| `hinge_mounting` | Cup drilling specs, placement rules, 3-axis adjustment, overlay types |
+| `drawer_slide_mounting` | Clearance calculations, step-by-step process, common mistakes |
+| `shelf_pins` | 32mm system, hole depths, jig recommendation |
+| `adhesive_guide` | PVA, contact cement, polyurethane — when to use and when NOT to use each |
+| `pre_drilling` | Pilot hole diameters and depths per material for confirmats, dowels, hinges, shelf pins |
 
 ---
 
@@ -90,12 +118,19 @@ Generate a Bill of Materials.
 Optimize panel cuts on standard sheets using guillotine algorithm.
 
 **Parameters:**
-- `parts` (list, required): Parts with `id`, `width` (mm), `height` (mm), `qty`, `can_rotate`
-- `sheet_width` (float, default: 2440): Sheet width in mm
+- `parts` (list, required): Parts with `id`, `width` (mm), `height` (mm), `qty`, `can_rotate`, `grain`
+  - `grain` per piece: `"length"` (grain along width — no rotation), `"width"` (grain along height — auto-rotates), `"none"` (free rotation)
+- `sheet_width` (float, default: 2440): Sheet width in mm. Grain runs along this axis on the sheet.
 - `sheet_height` (float, default: 1220): Sheet height in mm
 - `blade_kerf` (float, default: 3): Saw blade width in mm
+- `grain_direction` (string, default: `"auto"`): Global grain default. `"auto"` = per-piece, `"length"` = all pieces respect grain, `"none"` = free rotation.
 
-**Returns:** Sheets used, piece positions, waste percentage, text diagram.
+**Returns:** Sheets used, piece positions, waste percentage, grain arrows, text diagram.
+
+**Notes:**
+- Blade kerf (3mm default) is deducted from every cut — both between shelves and between pieces within a shelf.
+- When `grain="length"`, pieces are locked to their original orientation to keep the grain pattern aligned horizontally on the sheet.
+- For melamine with visible grain pattern, use `grain_direction="length"` to ensure consistent appearance across all pieces.
 
 ### `get_assembly_steps`
 
