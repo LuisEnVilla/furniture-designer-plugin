@@ -35,6 +35,7 @@ Resumen: 14 paneles en melamine 16mm, 3 tableros 2440x1220,
 - **Modelo 3D** en FreeCAD con componentes organizados por rol y propiedades de material (opcional)
 - **Importación desde FreeCAD** — leer un modelo existente (editado o manual) y validarlo, generar BOM y cortes
 - **Plano técnico 2D** en FreeCAD con vistas ortogonales (frontal, superior, lateral) auto-escaladas a A3 (opcional)
+- **Reporte interactivo HTML** con viewer 3D (Three.js), historial de iteraciones, y estética de plano técnico — se actualiza con cada ajuste del usuario
 
 ### Consideraciones importantes
 
@@ -133,7 +134,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 │  furniture-designer  │     │  furniture-designer-mcp      │
 │  -plugin (este repo) │────→│  (servidor MCP, repo aparte) │
 │                      │     │                               │
-│  • Skill SKILL.md    │     │  • 17 tools MCP               │
+│  • Skill SKILL.md    │     │  • 18 tools MCP               │
 │  • .mcp.json         │     │  • Engine: designer, validator │
 │  • reference.md      │     │  • Knowledge: materials, rules │
 │  • examples.md       │     │  • FreeCAD bridge scripts      │
@@ -148,7 +149,7 @@ Para modelos 3D, vistas explosionadas y diagramas de corte:
 ```
 
 - **Este plugin** — capa de UX: enseña al agente de IA cómo orquestar las herramientas
-- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 17 tools MCP que funcionan con cualquier cliente MCP
+- **[furniture-designer-mcp](https://github.com/LuisEnVilla/furniture-designer-mcp)** — motor: 18 tools MCP que funcionan con cualquier cliente MCP
 - **freecad-mcp** (opcional) — puente para ejecutar scripts Python en FreeCAD
 
 ## Licencia

@@ -264,6 +264,39 @@ build_import_script("MyDoc")
 
 ---
 
+## Design Report Tools
+
+### `update_design_report`
+
+Generate or update an interactive HTML design report with 3D visualization.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `spec` | dict | (requerido) | Furniture spec |
+| `comment` | str | `""` | Descripción de los cambios en esta iteración |
+| `iteration_name` | str | `""` | Nombre de la versión (auto: "v1", "v2"...) |
+| `output_path` | str | `null` | Ruta del HTML. Default: `./design_report.html` |
+
+**Returns:** Ruta absoluta del archivo HTML generado.
+
+**Features del reporte HTML:**
+- Viewer 3D interactivo (Three.js) con orbit/zoom/pan
+- Estética esquemática/blueprint (fondo oscuro, grid cyan, wireframes)
+- Click en panel → muestra dimensiones, posición, canteado
+- Slider de iteraciones para comparar versiones
+- Panel de resumen con desglose por rol
+- Tabla de partes vinculada al viewer 3D
+- Historial de iteraciones con comentarios y timestamps
+
+**Comportamiento acumulativo:**
+- Primera llamada → crea el HTML con v1
+- Llamadas subsiguientes → lee iteraciones existentes del HTML, agrega nueva
+- El historial completo se preserva en el archivo
+
+---
+
 ## Development Tools
 
 ### `reload_engine`

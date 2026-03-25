@@ -46,6 +46,9 @@ See [reference.md](reference.md) for the complete tool reference with parameters
 - `build_import_script` — Generate script to extract panels from an existing FreeCAD document
 - `parse_freecad_import` — Parse the script output into a usable furniture spec
 
+### Design Report
+- `update_design_report` — Generate/update an interactive HTML report with 3D viewer, iteration history, and design summary
+
 ## Performance Guidelines
 
 ### Knowledge Tools: Use `brief=true`
@@ -152,6 +155,29 @@ When the user has an existing model in FreeCAD and wants to validate, generate B
 - Models created by this system have custom properties (Role, Material, etc.) and import cleanly.
 - Manually created Part::Box objects will have roles inferred from names and geometry. The agent should inform the user if any panel has `role: "unknown"` and suggest naming conventions or setting the Role property in FreeCAD.
 - The imported spec has `furniture_type: "imported"` — some standards checks may not apply.
+
+### Action: Update Design Report
+
+**Trigger:** After completing a design or making any significant adjustment to the spec based on user feedback.
+
+**Steps:**
+1. Call `update_design_report(spec=<current_spec>, comment="<what changed>")` after each design iteration
+2. The first call creates `design_report.html`, subsequent calls append iterations
+3. Tell the user: "Reporte actualizado — ábrelo en el navegador para ver el diseño interactivo."
+
+**When to call:**
+- After `design_furniture` (initial design) → comment = "Diseño inicial: [tipo] [dims]"
+- After the user requests changes (add shelves, change material, add drawers) → comment = description of the change
+- After import from FreeCAD → comment = "Importado desde FreeCAD"
+
+**The HTML report provides:**
+- Interactive 3D viewer with orbit/zoom/pan (Three.js)
+- Schematic blueprint aesthetic
+- Click on any panel to see dimensions and properties
+- Iteration slider to compare all versions
+- Summary with part counts, material, dimensions
+- Parts table linked to 3D view
+- Full design history with comments
 
 ### Action: Fix Invalid Spec
 
