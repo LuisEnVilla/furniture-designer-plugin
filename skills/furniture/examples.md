@@ -1,170 +1,201 @@
 # Usage Examples
 
-## Example 1: Full Design Workflow
+## Example 1: Flujo completo — Closet con secciones
 
-**User says:** "Design a kitchen base cabinet, 60cm wide, 90cm tall, 60cm deep"
+Muestra el protocolo completo: Descubrimiento → Generación → Iteración → Exportación.
 
-**Agent workflow:**
+**Conversación:**
 
-1. Call `design_furniture("kitchen_base", 60, 90, 60)`
-2. Call `validate_structure(spec)` → expect 0 errors, 0 warnings
-3. Call `generate_bom(spec)` → panels, hardware, edge banding
-4. Call `optimize_cuts(parts)` → sheets and waste
-5. Call `get_assembly_steps(spec)` → step-by-step instructions
+> **User:** Quiero diseñar un closet
+>
+> **Agent:** ¡Perfecto! Vamos paso a paso. ¿Cuáles son las medidas del espacio donde irá el closet? (ancho × alto × fondo en cm)
+>
+> **User:** 180 de ancho, 240 de alto, 60 de fondo
+>
+> **Agent:** Buenas dimensiones. 180cm de ancho excede el tramo libre de melamina 16mm (75cm), así que el motor agregará divisores automáticamente. ¿Qué material prefieres?
+> - **Melamina 16mm** (económica, tramo máx 75cm → 2 divisores)
+> - **Melamina 18mm** (estándar, tramo máx 85cm → 1 divisor)
+> - **MDF 18mm** (mejor acabado, tramo máx 90cm → 1 divisor)
+>
+> **User:** Melamina 18
+>
+> **Agent:** Con melamina 18mm solo necesitaremos 1 divisor (2 secciones). ¿Qué vas a almacenar? Esto define la distribución:
+> - Sección izquierda: ¿repisas, cajones, barra de colgar?
+> - Sección derecha: ¿igual o diferente?
+>
+> **User:** Izquierda para colgar ropa con cajones abajo, derecha repisas
+>
+> **Agent:** Entendido. Diseño propuesto:
+> - Closet 180×240×60cm en melamina 18mm
+> - Sección izquierda: barra de colgar + 3 cajones inferiores
+> - Sección derecha: repisas
+> - Zócalo de 10cm
+>
+> ¿Genero el diseño base?
+>
+> **User:** Sí
 
-**Expected summary:**
+**Agent ejecuta (Fase B):**
 
-> Kitchen base cabinet 60x90x60cm in melamine 16mm:
-> - 9 panels: 2 sides, 1 bottom, 2 rails, 1 back, 1 shelf, 1 kickplate, 1 door
-> - Validation: 0 errors, 0 warnings
-> - BOM: 8 structural panels + 1 back panel, 4.55m edge banding
-> - Cuts: 2 sheets (2440x1220mm), ~62% waste (normal for a single small cabinet)
-> - Assembly: 9 steps
-
----
-
-## Example 2: Consult Material Standards
-
-**User says:** "What material should I use for a 100cm wide shelf?"
-
-**Agent workflow:**
-
-1. Call `get_material_specs("melamine_16")` → max span 75cm (too narrow!)
-2. Call `get_material_specs("mdf_18")` → max span 90cm (still too narrow!)
-3. Call `get_material_specs("plywood_18")` → max span 100cm (exact fit)
-
-**Agent recommends:** plywood_18 or solid_pine_20 for a 100cm span, or add a vertical divider with melamine_16.
-
----
-
-## Example 3: Build 3D Model in FreeCAD
-
-**User says:** "Build a bookshelf 80x200x30 in FreeCAD"
-
-**Agent workflow:**
-
-1. Call `design_furniture("bookshelf", 80, 200, 30)`
-2. Call `build_3d_model(spec)` → builds model directly in FreeCAD
-3. If user asks to see: call `mcp__freecad__get_view("Isometric")` → shows screenshot
-
-**Note:** FreeCAD must be open with RPC server running.
-
----
-
-## Example 4: Exploded View for Assembly Reference
-
-**User says:** "Show me how the cabinet assembles"
-
-**Agent workflow:**
-
-1. Reuse existing spec (or generate new one)
-2. Call `build_exploded_view(spec, gap_mm=80)`
-3. Execute in FreeCAD and show view
-
----
-
-## Example 5: Cut Optimization
-
-**User says:** "How many sheets do I need for a closet 120x240x60?"
-
-**Agent workflow:**
-
-1. Call `design_furniture("closet", 120, 240, 60)` → generates spec with vertical divider (120cm > 75cm max span)
-2. Call `optimize_cuts(parts)` → number of sheets and waste
-3. Present the cut layout with waste percentage
-
----
-
-## Example 6: Wide Cabinet with Auto-Divider
-
-**User says:** "Design a 150cm wide bookshelf"
-
-**Agent notes:** 150cm exceeds the max unsupported span for melamine_16 (75cm), so the engine automatically adds a vertical divider at the center.
-
-1. Call `design_furniture("bookshelf", 150, 200, 30, "melamine_16")`
-2. Spec will include a `divider_center` panel
-3. Validation will note the divider was added
-
----
-
-## Example 7: Assembly Specifications
-
-**User says:** "¿Qué tornillos uso para unir los laterales al piso? ¿Necesito pegamento?"
-
-**Agent workflow:**
-
-1. Call `get_assembly_specs("panel_to_panel", brief=true)` → joint methods and recommendations
-2. Look at `by_joint_type.side_to_bottom` → recommends confirmat + dowels, min 3 confirmats
-
-**Agent recommends:** Confirmat 7x50mm (pre-taladrar con broca de 5mm, 40mm profundidad) + tarugos de madera 8x35mm con cola blanca. Mínimo 3 confirmats. No poner pegamento en los confirmats, solo en los tarugos.
-
----
-
-## Example 8: Pre-Drilling Guide
-
-**User says:** "¿A qué profundidad taladro para bisagras en melamina de 18mm?"
-
-**Agent workflow:**
-
-1. Call `get_assembly_specs("pre_drilling", brief=true)` → drilling specs per material
-2. Call `get_assembly_specs("hinge_mounting", brief=true)` → full mounting process
-
-**Agent responds:** Copa Forstner de 35mm a 13mm de profundidad. CUIDADO: el panel solo tiene 18mm. Luego fijar bisagra con tornillos 3.5x16mm.
-
----
-
-## Example 9: Import and Validate from FreeCAD
-
-**User says:** "Modifiqué el mueble en FreeCAD, agregué una repisa. ¿Puedes validarlo?"
-
-**Agent workflow:**
-
-1. Call `build_import_script("Furniture")` → extraction script
-2. Call `mcp__freecad__execute_code(script)` → raw output with JSON
-3. Call `parse_freecad_import(raw_output)` → spec with all panels
-4. Check `import_warnings` — inform user if any panel has unknown role
-5. Call `validate_structure(spec)` → check structural integrity
-6. Call `generate_bom(spec)` → updated bill of materials
-7. Call `optimize_cuts(parts)` → new cut layout with the added shelf
-
-**Expected summary:**
-
-> Imported 8 panels from FreeCAD (document "Furniture").
-> Validation: 0 errors, 1 warning (shelf >80cm, consider reinforcement).
-> BOM updated: 9 panels, 5.2m edge banding.
-> Cuts: 2 sheets, 54% waste.
-
----
-
-## Example 10: Import Manual Model
-
-**User says:** "Hice un mueble desde cero en FreeCAD. ¿Puedes generar el BOM y los cortes?"
-
-**Agent workflow:**
-
-1. Call `build_import_script("MiMueble")` → extraction script
-2. Execute and parse → spec
-3. If `import_warnings` has unknown roles: "Encontré 2 paneles sin rol definido (Box003, Box005). ¿Son repisas, laterales, o algo más?"
-4. After user clarifies → adjust spec and continue with `generate_bom` + `optimize_cuts`
-
-**Note:** For best results with manual models, name objects descriptively in FreeCAD (e.g., "side_left", "shelf_1", "back") or add the `Role` property via FreeCAD's property editor.
-
----
-
-## Common Options
-
-```json
-{
-  "num_shelves": 4,
-  "has_doors": true,
-  "door_type": "double",
-  "kickplate_height": 10,
-  "has_modesty_panel": true
-}
+```
+1. start_design_server()
+2. create_design("closet-dormitorio", "closet") → design_id = "closet-dormitorio"
+3. design_furniture("closet", 180, 240, 60, "melamine_18", {
+     "sections": [
+       {"content": "drawers+hanging", "num_drawers": 3},
+       {"content": "shelves"}
+     ]
+   })
+4. validate_structure(spec)
+5. optimize_cuts(spec.parts) → cut_data
+6. update_design_report(design_id="closet-dormitorio", spec=spec, cut_data=cut_data,
+     comment="Diseño inicial: closet 180x240x60 melamina 18mm")
 ```
 
-- `num_shelves`: Number of adjustable shelves
-- `has_doors`: Add doors (for bookshelf, closet, wall cabinet)
-- `door_type`: "single" or "double" (auto-selected based on width if omitted)
-- `kickplate_height`: Kickplate height in cm (default: 10)
-- `has_modesty_panel`: Front modesty panel for desks (default: true)
+**Agent responde:**
+
+> Reporte listo en http://localhost:8432/closet-dormitorio
+>
+> **Resumen:**
+> - 18 paneles: 2 laterales, 1 tapa, 1 fondo, 1 divisor, 1 zócalo, 3 repisas, barra cromada, 3 cajones (5 piezas c/u)
+> - Validación: 0 errores, 0 warnings
+> - 4 tableros de melamina 18mm (2440×1220), desperdicio: 38%
+> - Barra cromada Ø25mm de 88cm
+
+**Iteración (Fase C):**
+
+> **User:** Agrega 2 repisas más a la derecha
+>
+> **Agent:** *(usa get_section_map para confirmar que "derecha" = S2, luego regenera)*
+
+```
+1. get_section_map(design_id="closet-dormitorio", resolve="derecha") → S2
+2. design_furniture("closet", 180, 240, 60, "melamine_18", {
+     "sections": [
+       {"content": "drawers+hanging", "num_drawers": 3},
+       {"content": "shelves", "num_shelves": 5}  // era 3, ahora 5
+     ]
+   })
+3. validate_structure → optimize_cuts
+4. update_design_report(design_id="closet-dormitorio", ..., comment="Agregadas 2 repisas en sección derecha (5 total)")
+```
+
+> Listo — el reporte se actualizó automáticamente en tu navegador. Ahora la sección derecha tiene 5 repisas. Puedes comparar con la versión anterior usando el slider de iteración.
+
+---
+
+## Example 2: Mueble de cocina rápido
+
+Flujo más directo cuando el usuario da toda la información de entrada.
+
+> **User:** Diseña un bajo de cocina de 80x90x60, melamina 16, con 2 cajones
+
+**Agent (Fase A comprimida — toda la info ya está):**
+
+> Entendido: bajo de cocina 80×90×60cm en melamina 16mm con 2 cajones. ¿Genero el diseño?
+
+> **User:** Dale
+
+**Agent ejecuta:**
+
+```
+1. start_design_server()
+2. create_design("bajo-cocina-80", "kitchen_base")
+3. design_furniture("kitchen_base", 80, 90, 60, "melamine_16", {"num_drawers": 2})
+4. validate_structure(spec)
+5. optimize_cuts(spec.parts) → cut_data
+6. update_design_report(design_id="bajo-cocina-80", spec=spec, cut_data=cut_data,
+     comment="Bajo de cocina 80x90x60 con 2 cajones")
+```
+
+> Reporte en http://localhost:8432/bajo-cocina-80
+>
+> - 13 paneles incluyendo 2 cajones completos (frente + caja)
+> - Zócalo retranqueado 5cm
+> - 2 tableros, 48% desperdicio (normal para un mueble individual)
+
+---
+
+## Example 3: Retomar un diseño existente
+
+> **User:** ¿Qué diseños tengo guardados?
+>
+> **Agent:**
+
+```
+list_designs()
+```
+
+> Tienes 2 diseños:
+> 1. **closet-dormitorio** — Closet, 3 iteraciones, última: hace 2 horas
+> 2. **bajo-cocina-80** — Kitchen base, 1 iteración
+>
+> ¿Cuál quieres retomar?
+
+> **User:** El closet
+
+```
+get_design_context("closet-dormitorio")
+```
+
+> Recuperado. Última versión (v3): closet 180×240×60 en melamina 18mm con sección izquierda (cajones + barra) y derecha (5 repisas). ¿Qué cambio necesitas?
+
+> **User:** Cambia el material a MDF 18
+
+```
+1. design_furniture("closet", 180, 240, 60, "mdf_18", {mismas opciones})
+2. validate_structure → optimize_cuts
+3. update_design_report(design_id="closet-dormitorio", ..., comment="Cambio de material: melamina 18 → MDF 18")
+```
+
+> Actualizado. Con MDF 18mm el tramo máximo sube a 90cm (vs 85cm de melamina 18). El divisor sigue siendo necesario (90cm < 90cm de ancho interno). Desperdicio bajó a 36%.
+
+---
+
+## Example 4: Consulta de estándares y hardware
+
+> **User:** ¿Qué tornillos uso para unir los laterales? ¿Necesito pegamento?
+
+```
+get_assembly_specs("panel_to_panel", brief=true)
+```
+
+> Para unión lateral-fondo (panel a panel):
+> - **Confirmat 7×50mm**: pre-taladrar con broca de 5mm, 40mm profundidad. Mínimo 3 por unión.
+> - **Tarugos 8×35mm**: con cola blanca D3 para refuerzo. No poner pegamento en los confirmats.
+> - Espaciado: cada 20-25cm en juntas largas.
+
+---
+
+## Example 5: Importar y validar desde FreeCAD
+
+> **User:** Modifiqué el mueble en FreeCAD, agregué una repisa. ¿Puedes validarlo?
+
+```
+1. build_import_script("Furniture")
+2. mcp__freecad__execute_code(script)
+3. parse_freecad_import(raw_output) → spec con 9 paneles
+4. validate_structure(spec) → 0 errores, 1 warning
+5. generate_bom(spec) → BOM actualizado
+6. optimize_cuts(spec.parts) → 2 tableros
+```
+
+> Importé 9 paneles desde FreeCAD:
+> - Validación: 0 errores, 1 warning (repisa de 82cm — considerar refuerzo)
+> - BOM: 9 paneles, 5.2m de canteado
+> - Cortes: 2 tableros, 54% desperdicio
+
+---
+
+## Section Content Options
+
+Opciones disponibles para el campo `sections[].content` en `design_furniture`:
+
+| Content | Descripción | Opciones adicionales |
+|---------|-------------|---------------------|
+| `shelves` | Repisas ajustables | `num_shelves` (default: auto por altura) |
+| `drawers` | Solo cajones | `num_drawers`, `drawer_height` |
+| `hanging` | Barra de colgar | `hanging_bar_height_cm` (default: 160) |
+| `drawers+hanging` | Cajones abajo + barra arriba | `num_drawers`, `hanging_bar_height_cm` |
+| `drawers+shelves` | Cajones abajo + repisas arriba | `num_drawers`, `num_shelves` |
+| `empty` | Sin contenido | — |

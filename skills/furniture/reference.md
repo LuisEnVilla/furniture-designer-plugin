@@ -16,16 +16,31 @@ Generate a complete furniture spec with standards applied.
 - `height` (float, required): Total height in cm
 - `depth` (float, required): Total depth in cm
 - `material` (string, default: `melamine_16`): Material key
-- `options` (dict, optional): Overrides like `{"num_shelves": 3, "has_doors": true, "door_type": "double", "kickplate_height": 10, "num_drawers": 2, "drawer_height": 140}`
+- `options` (dict, optional): Overrides — ver tabla de opciones abajo
 - `compact` (bool, default: `true`): Return compact summary + JSON. Set `false` for pretty-printed JSON only.
 
 **Returns:** Compact summary + furniture spec JSON (or full JSON if compact=false).
+
+**Opciones disponibles (`options` dict):**
+
+| Opción | Tipo | Default | Descripción |
+|--------|------|---------|-------------|
+| `num_shelves` | int | auto (por altura) | Cantidad de repisas. **Máximo: 20.** |
+| `num_drawers` | int | `0` | Cantidad de cajones. **Máximo: 10.** Genera caja completa (5 partes + correderas). |
+| `drawer_height` | int | `140` | Altura visible del frente de cajón en mm. |
+| `has_doors` | bool | `false` | Agregar puertas (solo `closet`/`bookshelf`). |
+| `door_type` | str | auto | `"single"` o `"double"`. Auto: single si ancho ≤60cm, double si >60cm. |
+| `kickplate_height` | int | `100` | Altura del zócalo en mm (10cm default). |
+| `back_type` | str | `"full"` | Tipo de respaldo: `"full"` (panel MDF completo), `"rails"` (travesaños ventilación), `"none"` (sin respaldo). |
+| `sections` | list[dict] | `null` | Secciones personalizadas. Cada sección: `{"width_cm": 80, "num_shelves": 3, "num_drawers": 1}`. Si `width_cm` es `"auto"`, distribuye espacio restante. **Tiene prioridad sobre `num_shelves` global.** |
 
 **Notes:**
 - Input dimensions are in cm, output dimensions in mm (manufacturing standard)
 - Automatically adds vertical dividers when width exceeds material max span
 - Back panels are always 3mm MDF
 - Edge banding is auto-assigned by panel role
+- Si se pasa `sections` y `num_shelves` al mismo tiempo, `sections` tiene prioridad (con warning)
+- El zócalo se genera como marco rectangular completo (4 piezas): frente retranqueado 5cm, fondo, y 2 retornos laterales. Los laterales del mueble se apoyan encima de este marco.
 
 ---
 
@@ -128,12 +143,50 @@ Optimize panel cuts on standard sheets using guillotine algorithm.
 - `grain_direction` (string, default: `"auto"`): Global grain default. `"auto"` = per-piece, `"length"` = all pieces respect grain, `"none"` = free rotation.
 - `compact` (bool, default: `true`): Return compact summary + JSON.
 
-**Returns:** Compact summary + optimization JSON. Includes `warnings` for auto-relaxed grain constraints.
+**Returns:** Compact summary + optimization JSON. Campos clave del resultado:
+- `sheets_needed` (int): Cantidad de tableros necesarios
+- `sheet_size_mm` (dict): `{width, height}` del tablero usado
+- `waste_percentage` (float): Porcentaje de desperdicio
+- `sheets[]`: Lista de tableros con `sheet_number` y `pieces[]` (cada pieza: `id`, `x`, `y`, `width`, `height`, `rotated`)
+- `warnings` (list): Avisos de grano relajado u otros ajustes
 
 **Notes:**
 - Blade kerf (3mm default) is deducted from every cut — both between shelves and between pieces within a shelf.
 - When `grain="length"`, pieces are locked to their original orientation to keep the grain pattern aligned horizontally on the sheet.
 - For melamine with visible grain pattern, use `grain_direction="length"` to ensure consistent appearance across all pieces.
+- Si una pieza no cabe con restricción de grano, el optimizer relaja automáticamente a `grain="none"` con warning.
+- Si se pasan partes con `width_mm`/`height_mm` (del spec), se auto-convierten a `width`/`height` con warning.
+- **Filtrar paneles MDF** antes de optimizar: excluir `back`, `drawer_bottom`, y cualquier panel con `thickness_mm` menor al material principal. Estos se cortan de otro stock (MDF 3mm).
+
+**⚠ Schema spec vs. schema optimize_cuts (NO MEZCLAR):**
+
+| Campo | En `spec.parts[]` | En `optimize_cuts.parts[]` |
+|-------|-------------------|---------------------------|
+| Ancho | `width_mm` | `width` |
+| Alto | `height_mm` | `height` |
+| Espesor | `thickness_mm` | *(no aplica)* |
+| Posición | `position_mm` | *(no aplica)* |
+| Cantidad | *(implícita: 1)* | `qty` (default: 1) |
+| Grano | *(no aplica)* | `grain` (`"length"`, `"width"`, `"none"`) |
+| Rotación | *(no aplica)* | `can_rotate` (bool) |
+
+**Grain direction — referencia clara:**
+
+| Valor | Significado | Rotación | Uso típico |
+|-------|-------------|----------|------------|
+| `"length"` | Grano corre a lo largo del `width` de la pieza | **Bloqueada** — la pieza no rota | Melamina con textura visible |
+| `"width"` | Grano corre a lo largo del `height` de la pieza | **Auto-rota** para alinear con el tablero | Cuando la veta va en la otra dirección |
+| `"none"` | Sin restricción de grano | **Libre** — rota para minimizar desperdicio | MDF, materiales sin veta, o cuando no importa |
+| `"auto"` *(global)* | Usa el `grain` individual de cada pieza | Depende de la pieza | Default — la opción más flexible |
+
+**Fórmulas de hardware (referencia):**
+
+| Hardware | Fórmula | Ejemplo |
+|----------|---------|---------|
+| Confirmats por unión | 2 por esquina + 1 cada 30cm de largo | Panel 200cm ≈ 8 confirmats |
+| Bisagras por puerta | 2 si puerta ≤ 100cm, 3 si ≤ 180cm, 4 si > 180cm | Puerta 220cm → 4 bisagras |
+| Pernos de repisa | 4 por repisa ajustable | 5 repisas → 20 pernos |
+| Correderas por cajón | 1 par (izq + der) | 2 cajones → 2 pares |
 
 ### `get_assembly_steps`
 
@@ -264,6 +317,107 @@ build_import_script("MyDoc")
 
 ---
 
+## Multi-Design Tools
+
+### `create_design`
+
+Create a new design project with its own directory.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `name` | str | (requerido) | Nombre legible (ej: "Closet Dormitorio Principal") |
+| `furniture_type` | str | (requerido) | Tipo de mueble (closet, kitchen_base, etc.) |
+
+**Returns:** `design_id` (slug), ruta del directorio, URL si el servidor está activo.
+
+**Notes:**
+- El `design_id` es un slug generado del nombre (ej: "closet-dormitorio-principal")
+- Si ya existe un diseño con el mismo slug, agrega un sufijo numérico
+- Crea el directorio `./designs/{design_id}/` con `metadata.json`
+
+### `list_designs`
+
+List all active designs with metadata.
+
+**Parameters:** Ninguno.
+
+**Returns:** Lista de diseños con nombre, tipo, iteraciones, fecha de última actualización.
+
+### `get_design_context`
+
+Retrieve the full context of a design for resuming work in a new session.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `design_id` | str | (requerido) | Identificador del diseño (slug) |
+
+**Returns:** Metadata + spec compacto + spec JSON completo.
+
+**Use case:** Al iniciar una nueva sesión, el agente puede recuperar todo el contexto de un diseño anterior para continuar iterando.
+
+---
+
+## Design Server
+
+### `start_design_server`
+
+Start the local HTTP server for serving design reports with live reload.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `port` | int | `8432` | Puerto HTTP. Fallback a puerto aleatorio si está ocupado. |
+| `designs_dir` | str | `"./designs"` | Directorio para archivos de diseño. |
+
+**Returns:** URL del servidor y estado.
+
+**Routes:**
+```
+GET /                          → Página índice con lista de diseños
+GET /{design_id}               → Sirve report.html
+GET /api/{design_id}/spec      → JSON spec del diseño
+WS  /ws/{design_id}            → WebSocket para live reload
+```
+
+**Notes:**
+- Solo necesita llamarse una vez por sesión — queda activo hasta que se cierra el MCP.
+- El HTML generado por `update_design_report` incluye un cliente WebSocket que se conecta automáticamente.
+- Si el puerto está ocupado, usa un puerto aleatorio y reporta la URL correcta.
+
+### `get_section_map`
+
+Get section labels from a furniture spec and optionally resolve natural language references.
+
+**Parameters:**
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `design_id` | str | `""` | Cargar spec desde un diseño guardado |
+| `spec` | str | `""` | JSON string de un spec (alternativa a design_id) |
+| `resolve` | str | `""` | Texto en lenguaje natural para resolver a un section ID |
+
+**Proveer `design_id` o `spec`** — uno de los dos es obligatorio.
+
+**Returns:** Mapa de secciones con etiquetas, aliases, límites X, y partes por sección. Si `resolve` está presente, incluye el section ID resuelto.
+
+**Ejemplo de resolución:**
+- `resolve="izquierda"` → `{ "section_id": "S1", ... }`
+- `resolve="centro"` → `{ "section_id": "S2", ... }`
+- `resolve="S3"` → `{ "section_id": "S3", ... }` (pass-through)
+
+**Section labels por cantidad:**
+- 1 sección: "principal"
+- 2 secciones: "izquierda", "derecha"
+- 3 secciones: "izquierda", "centro", "derecha"
+- 4+: "izquierda", "centro-izq", "centro-der", "derecha"
+
+---
+
 ## Design Report Tools
 
 ### `update_design_report`
@@ -277,18 +431,21 @@ Generate or update an interactive HTML design report with 3D visualization.
 | `spec` | dict | (requerido) | Furniture spec |
 | `comment` | str | `""` | Descripción de los cambios en esta iteración |
 | `iteration_name` | str | `""` | Nombre de la versión (auto: "v1", "v2"...) |
-| `output_path` | str | `null` | Ruta del HTML. Default: `./design_report.html` |
+| `design_id` | str | `null` | Identificador de diseño (de `create_design`). **Recomendado** — usa DesignStore + live reload. |
+| `output_path` | str | `null` | Ruta del HTML. Solo si `design_id` no está definido. Default: `./design_report.html` |
+| `cut_data` | dict | `null` | Resultado de `optimize_cuts` (para renderizar layout de cortes) |
 
 **Returns:** Ruta absoluta del archivo HTML generado.
 
 **Features del reporte HTML:**
-- Viewer 3D interactivo (Three.js) con orbit/zoom/pan
-- Estética esquemática/blueprint (fondo oscuro, grid cyan, wireframes)
+- Paleta clara minimalista (DM Sans, estilo ficha de producto)
+- 4 páginas: Diseño (3D armado + resumen), Partes (explosión + tabla), Cortes (SVG por tablero), Historial
+- Viewer 3D interactivo (Three.js v0.169) con orbit/zoom/pan
 - Click en panel → muestra dimensiones, posición, canteado
+- Canteado visual en tabla de partes (dots de color por borde)
+- SVG de cortes con layout por tablero, barras de uso, tablas de piezas
 - Slider de iteraciones para comparar versiones
-- Panel de resumen con desglose por rol
-- Tabla de partes vinculada al viewer 3D
-- Historial de iteraciones con comentarios y timestamps
+- WebSocket live-reload (se actualiza solo al guardar nueva iteración)
 
 **Comportamiento acumulativo:**
 - Primera llamada → crea el HTML con v1
@@ -354,7 +511,8 @@ Campos opcionales:
 | `back` | Respaldo (normalmente MDF 3mm) |
 | `door` | Puerta |
 | `rail` | Travesaño |
-| `kickplate` | Zócalo |
+| `kickplate` | Zócalo (frente y fondo del marco base) |
+| `kickplate_return` | Retorno lateral del zócalo (conecta frente con fondo) |
 | `divider` | División vertical |
 | `drawer_front` | Frente de cajón (canteado en 4 lados) |
 | `drawer_side` | Lateral de cajón |
