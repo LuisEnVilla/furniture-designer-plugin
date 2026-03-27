@@ -4,7 +4,8 @@
 
 Plugin que agrega a Claude Code un asistente especializado en diseño de muebles de melamina y madera. El agente guía al usuario conversacionalmente desde la idea hasta un paquete listo para fabricación, con reporte HTML interactivo, validación estructural, optimización de cortes y exportación 3D opcional.
 
-<!-- ![Flujo completo — del concepto al reporte interactivo](docs/screenshots/full-workflow-overview.png) -->
+<img width="1200" alt="reporte" src="https://github.com/user-attachments/assets/07470ff4-27d4-4e02-9a2a-cb771c515384" />
+
 
 ## Que hace
 
@@ -48,9 +49,10 @@ Agente:
 | **Diagrama de cortes** | Layout visual de tableros en FreeCAD (opcional) |
 | **Importacion desde FreeCAD** | Leer un modelo existente, validarlo, generar BOM y cortes (opcional) |
 
-<!-- ![Reporte HTML — pagina de diseno con viewer 3D](docs/screenshots/report-design-page.png) -->
+<img width="1200" alt="Reporte HTML — pagina de diseno con viewer 3D" src="https://github.com/user-attachments/assets/8e4e669f-b827-40fa-bf1e-ae96f6f597c1" />
 
-<!-- ![Reporte HTML — pagina de cortes con layout SVG](docs/screenshots/report-cuts-page.png) -->
+<img width="1200" alt="Reporte HTML" src="https://github.com/user-attachments/assets/1740adc6-2980-42f0-a3c5-e62a776960c0" />
+
 
 ## Instalacion
 
@@ -141,7 +143,10 @@ Cuando el usuario confirma, el agente:
 5. Genera el reporte HTML interactivo
 6. Proporciona la URL del reporte
 
-<!-- ![Fase B — reporte generado con resumen del agente](docs/screenshots/generation-phase-output.png) -->
+<img width="600" alt="reporte generado con resumen del agente" src="https://github.com/user-attachments/assets/d6761835-1262-47d8-989f-b9e2e9c2b1a6" />
+
+<img width="600" alt="reporte generado con resumen del agente" src="https://github.com/user-attachments/assets/464b4db1-eec3-4255-83f2-f651a95ecb61" />
+
 
 #### Fase C: Iteracion
 
