@@ -1,11 +1,20 @@
+<div align="center">
+
 # furniture-designer-plugin
 
-> **v0.1.0** — Plugin de Claude Code para diseño profesional de muebles
+**Plugin de Claude Code para diseño profesional de muebles**
 
-Plugin que agrega a Claude Code un asistente especializado en diseño de muebles de melamina y madera. El agente guía al usuario conversacionalmente desde la idea hasta un paquete listo para fabricación, con reporte HTML interactivo, validación estructural, optimización de cortes y exportación 3D opcional.
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/LuisEnVilla/furniture-designer-plugin/releases)
+[![License](https://img.shields.io/github/license/LuisEnVilla/furniture-designer-plugin)](LICENSE)
+[![MCP Server](https://img.shields.io/badge/MCP_Server-furniture--designer-orange)](https://github.com/LuisEnVilla/furniture-designer-mcp)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
+[![PyPI](https://img.shields.io/pypi/v/furniture-designer-mcp?label=Backend&color=green)](https://pypi.org/project/furniture-designer-mcp/)
+
+Asistente conversacional que guia al usuario desde la idea hasta un paquete listo para fabricacion: reporte HTML interactivo, validacion estructural, optimizacion de cortes y exportacion 3D opcional.
+
+</div>
 
 <img width="1200" alt="reporte" src="https://github.com/user-attachments/assets/07470ff4-27d4-4e02-9a2a-cb771c515384" />
-
 
 ## Que hace
 
